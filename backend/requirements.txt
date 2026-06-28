@@ -1,0 +1,11 @@
+fastapi[standard]
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
+langchain
+langchain-google-genai
+faiss-cpu
+pymupdf
+pydantic-settings
+langchain-community
