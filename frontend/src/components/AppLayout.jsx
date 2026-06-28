@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { FileText, LogOut, MessageSquare, Plus, Trash2, Edit2, ChevronLeft, Menu } from 'lucide-react';
+import { FileText, LogOut, MessageSquare, Plus, Trash2, Edit2, ChevronLeft, Menu, Sun, Moon, Monitor } from 'lucide-react';
 import api from '../api/axios';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [pdfs, setPdfs] = useState([]);
   const [activePdfId, setActivePdfId] = useState(null);
   const [chats, setChats] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     fetchPdfs();
@@ -67,6 +70,7 @@ export default function AppLayout() {
     try {
       await api.delete(`/chat/${chatId}`);
       setChats(chats.filter(c => c.id !== chatId));
+      setRefreshTrigger(prev => prev + 1);
       // If we are currently on this chat, go back to dashboard
       if (location.pathname.includes(`/session/${chatId}`)) {
         navigate('/dashboard');
@@ -82,6 +86,7 @@ export default function AppLayout() {
     try {
       await api.delete(`/pdf/${pdfId}`);
       setPdfs(pdfs.filter(p => p.id !== pdfId));
+      setRefreshTrigger(prev => prev + 1);
       if (activePdfId === pdfId) {
         navigate('/dashboard');
       }
@@ -149,8 +154,12 @@ export default function AppLayout() {
           )}
         </div>
         
-        <div className="p-4 border-t border-white/5">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-2 text-sm text-textMuted hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+        <div className="p-4 border-t border-white/5 space-y-2">
+          <button onClick={toggleTheme} className="w-full flex items-center justify-center gap-2 py-2 text-sm text-textMuted hover:text-textMain hover:bg-white/5 rounded-lg transition-colors">
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : theme === 'light' ? <Moon className="w-4 h-4" /> : <Monitor className="w-4 h-4" />}
+            {theme === 'dark' ? 'Light Mode' : theme === 'light' ? 'System Theme' : 'Dark Mode'}
+          </button>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-2 text-sm text-textMuted hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -207,7 +216,7 @@ export default function AppLayout() {
         {isMobileMenuOpen && (
           <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
         )}
-        <Outlet context={{ fetchPdfs }} />
+        <Outlet context={{ fetchPdfs, refreshTrigger, setRefreshTrigger }} />
       </div>
     </div>
   );

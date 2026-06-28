@@ -1,16 +1,22 @@
-# React + Vite
+# DocuMind AI - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The frontend for DocuMind AI is built with performance and modern SaaS aesthetics in mind.
 
-Currently, two official plugins are available:
+## Folder Structure
+- `/src/components/ui`: Reusable, theme-aware components (`Button`, `Card`, `Skeleton`, `EmptyState`).
+- `/src/contexts`: React Contexts (e.g., `ThemeContext` for managing Dark/Light modes).
+- `/src/pages`: Main application views (`Auth`, `Dashboard`, `Chat`).
+- `/src/api`: Axios instance configured for automatic JWT insertion.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Styling Guidelines
+We use Tailwind CSS v4. Instead of hardcoded colors like `text-white`, we utilize CSS variables defined in `index.css`:
+- `bg-background`: Main application background.
+- `bg-surface`: Card and modal backgrounds.
+- `text-textMain`: Primary text (automatically adapts to dark/light mode).
+- `text-textMuted`: Secondary/helper text.
+- `bg-primary`: The main brand color (Indigo).
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## State Management
+- Routing is handled via `react-router-dom`.
+- The `AppLayout` component acts as the master wrapper, providing a dual-sidebar navigation experience and passing a `refreshTrigger` via the `<Outlet context />` to synchronize data re-fetching (like dashboard stats) upon global actions (like deleting a PDF).
+- `react-hot-toast` is used for global notifications.

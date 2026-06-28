@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
@@ -17,6 +18,14 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" toastOptions={{
+        className: 'dark:bg-surface dark:text-textMain border dark:border-white/10',
+        style: {
+          background: 'var(--color-surface)',
+          color: 'var(--color-textMain)',
+          border: '1px solid var(--color-border)',
+        }
+      }} />
       <Routes>
         <Route path="/auth" element={<Auth />} />
         

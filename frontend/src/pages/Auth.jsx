@@ -1,20 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../api/axios';
-import { LogIn, UserPlus, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, LogIn, UserPlus } from 'lucide-react';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (!email || !password) {
+      toast.error("Please enter both email and password.");
+      return;
+    }
     
+    setIsLoading(true);
     try {
       if (isLogin) {
         const formData = new URLSearchParams();
@@ -25,87 +31,86 @@ export default function Auth() {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
         localStorage.setItem('token', res.data.access_token);
+        toast.success("Welcome back!");
         navigate('/dashboard');
       } else {
         await api.post('/auth/register', { email, password });
-        setIsLogin(true); // Switch to login after successful register
-        setError('Registration successful! Please login.');
+        toast.success("Registration successful! Please log in.");
+        setIsLogin(true);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Authentication failed');
+      toast.error(err.response?.data?.detail || 'Authentication failed');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card w-full max-w-md p-8 relative z-10"
-      >
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-            <FileText className="text-primary w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">DocuMind AI</h1>
-          <p className="text-textMuted mt-2">Chat with your PDFs intelligently</p>
+      <div className="mb-8 flex flex-col items-center">
+        <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+          <FileText className="w-8 h-8 text-primary" />
         </div>
+        <h1 className="text-3xl font-bold text-textMain tracking-tight">DocuMind AI</h1>
+        <p className="text-textMuted mt-2 text-center max-w-sm">
+          Your intelligent document assistant. Chat with your PDFs to extract insights instantly.
+        </p>
+      </div>
 
+      <Card className="w-full max-w-md">
+        <h2 className="text-2xl font-bold text-textMain mb-6 text-center">
+          {isLogin ? 'Sign in to your account' : 'Create an account'}
+        </h2>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-textMuted mb-1">Email</label>
+            <label className="block text-sm font-medium text-textMain mb-1">Email address</label>
             <input 
               type="email" 
-              required
-              className="w-full px-4 py-3 rounded-lg bg-surface/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-surface border border-white/10 text-textMain rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
+              placeholder="you@example.com"
+              required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-textMuted mb-1">Password</label>
+            <label className="block text-sm font-medium text-textMain mb-1">Password</label>
             <input 
               type="password" 
-              required
-              className="w-full px-4 py-3 rounded-lg bg-surface/50 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-surface border border-white/10 text-textMain rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors"
+              placeholder="••••••••"
+              required
             />
           </div>
-
-          {error && (
-            <div className={`p-3 rounded-lg text-sm ${error.includes('successful') ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-              {error}
-            </div>
-          )}
-
-          <button 
+          
+          <Button 
             type="submit" 
-            className="w-full py-3 px-4 bg-primary hover:bg-primaryHover text-white font-medium rounded-lg shadow-lg shadow-primary/30 flex items-center justify-center transition-all"
+            fullWidth 
+            isLoading={isLoading} 
+            icon={isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+            className="mt-6"
           >
-            {isLogin ? (
-              <><LogIn className="w-5 h-5 mr-2" /> Sign In</>
-            ) : (
-              <><UserPlus className="w-5 h-5 mr-2" /> Create Account</>
-            )}
-          </button>
+            {isLogin ? 'Sign in' : 'Register'}
+          </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center text-sm text-textMuted">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
           <button 
-            onClick={() => { setIsLogin(!isLogin); setError(''); }}
-            className="text-textMuted hover:text-white text-sm transition-colors"
+            type="button"
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-primary hover:text-primaryHover font-medium focus:outline-none"
           >
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            {isLogin ? 'Sign up' : 'Sign in'}
           </button>
         </div>
-      </motion.div>
+      </Card>
+      
     </div>
   );
 }

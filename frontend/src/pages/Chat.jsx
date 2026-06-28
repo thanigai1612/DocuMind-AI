@@ -1,8 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../api/axios';
-import { Send, Bot, User, Loader2, Edit3, Check, X } from 'lucide-react';
+import { Send, Bot, User, Edit3, Check, X, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+import Skeleton from '../components/ui/Skeleton';
+import EmptyState from '../components/ui/EmptyState';
+import Button from '../components/ui/Button';
 
 export default function Chat() {
   const { pdfId, chatId } = useParams();
@@ -47,6 +52,7 @@ export default function Chat() {
         setEditNameValue(currentChat.name);
       }
     } catch (err) {
+      toast.error('Failed to load chat data.');
       console.error(err);
     } finally {
       setIsInitializing(false);
@@ -70,6 +76,7 @@ export default function Chat() {
       setMessages(prev => [...prev, { role: 'ai', content: res.data.answer }]);
     } catch (err) {
       console.error(err);
+      toast.error('Failed to generate response.');
       setMessages(prev => [...prev, { 
         role: 'ai', 
         content: 'Sorry, I encountered an error while trying to answer that.' 
@@ -84,19 +91,28 @@ export default function Chat() {
       setIsEditingName(false);
       return;
     }
+    
+    const renameToast = toast.loading('Renaming chat...');
     try {
       await api.put(`/chat/rename/${chatId}`, { name: editNameValue });
       setChatDetails({ ...chatDetails, name: editNameValue });
       setIsEditingName(false);
+      toast.success('Chat renamed successfully', { id: renameToast });
     } catch (err) {
+      toast.error('Failed to rename chat', { id: renameToast });
       console.error("Error renaming chat", err);
     }
   };
 
   if (isInitializing) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <div className="h-full flex flex-col p-6">
+        <Skeleton className="h-12 w-64 mb-8" />
+        <div className="space-y-6 max-w-4xl w-full mx-auto">
+          <Skeleton className="h-20 w-3/4 self-end" />
+          <Skeleton className="h-24 w-3/4" />
+          <Skeleton className="h-16 w-3/4 self-end" />
+        </div>
       </div>
     );
   }
@@ -112,22 +128,22 @@ export default function Chat() {
               <input 
                 type="text"
                 autoFocus
-                className="bg-surface/50 border border-primary/50 rounded px-2 py-1 text-white text-sm focus:outline-none"
+                className="bg-surface border border-primary/50 rounded px-2 py-1 text-textMain text-sm focus:outline-none"
                 value={editNameValue}
                 onChange={(e) => setEditNameValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleRename()}
               />
-              <button onClick={handleRename} className="p-1 hover:bg-white/10 rounded text-green-400">
+              <button onClick={handleRename} className="p-1 hover:bg-white/10 rounded text-green-500 transition-colors">
                 <Check className="w-4 h-4" />
               </button>
-              <button onClick={() => { setIsEditingName(false); setEditNameValue(chatDetails?.name || ''); }} className="p-1 hover:bg-white/10 rounded text-red-400">
+              <button onClick={() => { setIsEditingName(false); setEditNameValue(chatDetails?.name || ''); }} className="p-1 hover:bg-white/10 rounded text-red-500 transition-colors">
                 <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
             <>
-              <h2 className="font-semibold text-white tracking-wide">{chatDetails?.name || 'Chat Session'}</h2>
-              <button onClick={() => setIsEditingName(true)} className="p-1.5 hover:bg-white/10 rounded-md text-textMuted hover:text-white transition-colors">
+              <h2 className="font-semibold text-textMain tracking-wide">{chatDetails?.name || 'Chat Session'}</h2>
+              <button onClick={() => setIsEditingName(true)} className="p-1.5 hover:bg-white/10 rounded-md text-textMuted hover:text-textMain transition-colors">
                 <Edit3 className="w-4 h-4" />
               </button>
             </>
@@ -140,12 +156,12 @@ export default function Chat() {
         <div className="max-w-4xl mx-auto space-y-8">
           
           {messages.length === 0 && !isTyping && (
-            <div className="h-[40vh] flex flex-col items-center justify-center opacity-50">
-              <Bot className="w-16 h-16 text-primary mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">Hello!</h3>
-              <p className="text-center text-textMuted max-w-sm">
-                I've processed your PDF document and I'm ready to answer any questions you have about it.
-              </p>
+            <div className="h-[50vh] flex flex-col items-center justify-center">
+              <EmptyState 
+                icon={Bot} 
+                title="AI Assistant Ready" 
+                description="I've analyzed your document. What would you like to know about it?" 
+              />
             </div>
           )}
 
@@ -162,7 +178,7 @@ export default function Chat() {
               <div className={`px-5 py-4 rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed ${
                 msg.role === 'user' 
                   ? 'bg-primary text-white rounded-tr-none shadow-md shadow-primary/20' 
-                  : 'glass text-gray-200 rounded-tl-none border-l border-primary/20'
+                  : 'glass text-textMain rounded-tl-none border-l border-primary/20'
               }`}>
                 {/* Simple whitespace formatting */}
                 {msg.content.split('\n').map((line, i) => (
@@ -178,8 +194,9 @@ export default function Chat() {
                 <Bot className="w-5 h-5 text-primary" />
               </div>
               <div className="glass px-5 py-4 rounded-2xl rounded-tl-none flex items-center gap-3 text-textMuted">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" /> 
-                <span className="animate-pulse">Thinking...</span>
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </motion.div>
           )}
@@ -190,19 +207,19 @@ export default function Chat() {
       {/* Input Area */}
       <div className="p-4 bg-background/80 backdrop-blur-xl border-t border-white/5 shrink-0">
         <div className="max-w-4xl mx-auto relative group">
-          <form onSubmit={handleSend}>
+          <form onSubmit={handleSend} className="flex items-center">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about your document..."
-              className="w-full bg-surface/50 border border-white/10 text-white rounded-xl pl-6 pr-14 py-4 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder-gray-500 shadow-xl"
+              className="w-full bg-surface border border-white/10 text-textMain rounded-xl pl-6 pr-14 py-4 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder-gray-500 shadow-xl"
               disabled={isTyping}
             />
             <button 
               type="submit"
               disabled={!input.trim() || isTyping}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-primary hover:bg-primaryHover text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary/30"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-primary hover:bg-primaryHover text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-primary/30 focus:outline-none"
             >
               <Send className="w-5 h-5" />
             </button>
